@@ -1,0 +1,1 @@
+import{c as t,b as s,o}from"./index-CA9XtrBN.js";const n={class:"p-4"},c={__name:"Trends",setup(r){return(a,e)=>(o(),t("div",n,e[0]||(e[0]=[s("h1",{class:"text-2xl font-bold mb-4"},"Trends",-1),s("p",null,"Trends page content will go here.",-1)])))}};export{c as default};

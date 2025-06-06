@@ -1,0 +1,1 @@
+import{c as o,b as e,o as a}from"./index-CA9XtrBN.js";const s={class:"p-4"},c={__name:"Chat",setup(l){return(n,t)=>(a(),o("div",s,t[0]||(t[0]=[e("h1",{class:"text-2xl font-bold mb-4"},"Chat",-1),e("p",null,"Chat page content will go here.",-1)])))}};export{c as default};
