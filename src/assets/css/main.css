@@ -1,0 +1,53 @@
+/* Import Lemonada font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lemonada:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .ball {
+    @apply rounded-full bg-gray-200 text-xl font-semibold w-10 h-10 flex items-center justify-center;
+  }
+  
+  .tab {
+    @apply px-4 py-2 text-center;
+  }
+  
+  .tab-active {
+    @apply bg-primary text-white;
+  }
+  
+  .bet-option {
+    @apply px-4 py-2 rounded-lg border border-gray-200 text-primary font-medium;
+  }
+  
+  .number-grid-item {
+    @apply border border-gray-200 rounded-lg p-2 flex flex-col items-center;
+  }
+  
+  /* Login and Register Styles */
+  .auth-input {
+    @apply appearance-none relative block w-full px-3 py-2 border border-gray-300 
+           placeholder-gray-500 text-gray-900 rounded-md focus:outline-none 
+           focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm;
+  }
+  
+  .auth-button {
+    @apply w-full flex justify-center py-2 px-4 border border-transparent 
+           text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+  }
+  
+  .auth-link {
+    @apply font-medium text-blue-600 hover:text-blue-500;
+  }
+  
+  .auth-container {
+    @apply flex flex-col items-center justify-center min-h-screen bg-gray-100;
+  }
+  
+  .auth-form-container {
+    @apply w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md;
+  }
+}
