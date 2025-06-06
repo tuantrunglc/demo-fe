@@ -1,0 +1,1 @@
+import{c as e,b as t,o}from"./index-D1Shopwy.js";const a={class:"p-4"},l={__name:"Transactions",setup(n){return(r,s)=>(o(),e("div",a,s[0]||(s[0]=[t("h1",{class:"text-2xl font-bold mb-4"},"Transactions",-1),t("p",null,"Transactions page content will go here.",-1)])))}};export{l as default};
