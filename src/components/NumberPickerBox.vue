@@ -20,6 +20,8 @@
           min="1"
           step="1"
           @input="validateAmount"
+          @focus="selectAllText"
+          :placeholder="'Tối đa: ' + (props.walletBalance > 0 ? props.walletBalance : 'Không giới hạn')"
         />
         <button 
           @click="increaseAmount" 
@@ -97,6 +99,10 @@ const props = defineProps({
   optionTitle: {
     type: String,
     default: 'Chọn số lượng'
+  },
+  walletBalance: {
+    type: Number,
+    default: 0
   }
 });
 
@@ -106,7 +112,10 @@ const amount = ref(props.initialAmount);
 const quickOptions = ref(props.initialOptions);
 
 const increaseAmount = () => {
-  amount.value += 1;
+  // Increase amount by 1 but don't exceed wallet balance
+  if (props.walletBalance === 0 || amount.value < props.walletBalance) {
+    amount.value += 1;
+  }
 };
 
 const decreaseAmount = () => {
@@ -118,6 +127,11 @@ const decreaseAmount = () => {
 };
 
 const validateAmount = () => {
+  // Nếu input trống, không làm gì cả
+  if (amount.value === '') {
+    return;
+  }
+  
   // Ensure amount is at least 1
   if (amount.value < 1) {
     amount.value = 1;
@@ -125,17 +139,46 @@ const validateAmount = () => {
   
   // Ensure amount is an integer
   amount.value = Math.floor(amount.value);
+  
+  // Ensure amount is not greater than wallet balance
+  if (props.walletBalance > 0 && amount.value > props.walletBalance) {
+    amount.value = props.walletBalance;
+  }
 };
 
 const setAmount = (value) => {
-  amount.value = value;
+  // Set amount but don't exceed wallet balance
+  if (props.walletBalance === 0 || value <= props.walletBalance) {
+    amount.value = value;
+  } else {
+    amount.value = props.walletBalance;
+  }
 };
 
 const confirm = () => {
+  // Nếu input trống, đặt giá trị mặc định là 1
+  if (amount.value === '') {
+    amount.value = 1;
+  }
   emit('confirm', amount.value);
 };
 
 const cancel = () => {
   emit('cancel');
+};
+
+// Hàm xóa trắng input khi focus
+const selectAllText = () => {
+  // Lưu giá trị hiện tại vào biến tạm
+  const currentValue = amount.value;
+  // Đặt giá trị thành rỗng
+  amount.value = '';
+  
+  // Sử dụng setTimeout để đặt lại giá trị nếu người dùng không nhập gì và bỏ focus
+  setTimeout(() => {
+    if (amount.value === '') {
+      amount.value = currentValue;
+    }
+  }, 200);
 };
 </script>

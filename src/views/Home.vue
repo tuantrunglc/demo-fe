@@ -103,65 +103,6 @@
 
         <!-- Content for "Số 1 ~ 5" tab -->
         <div v-if="activeTab === 'so15'">
-          <!-- Position Tabs -->
-          <div class="flex justify-center gap-1 px-4 mb-4 text-base font-medium">
-            <button 
-              @click="selectedPosition = 1" 
-              :class="[
-                'px-3 py-1 rounded',
-                selectedPosition === 1 
-                  ? 'bg-blue-500 text-white font-medium shadow' 
-                  : 'bg-white text-blue-500 border border-blue-300'
-              ]"
-            >
-              C.Ngàn
-            </button>
-            <button 
-              @click="selectedPosition = 2" 
-              :class="[
-                'px-3 py-1 rounded',
-                selectedPosition === 2 
-                  ? 'bg-blue-500 text-white font-medium shadow' 
-                  : 'bg-white text-blue-500 border border-blue-300'
-              ]"
-            >
-              Ngàn
-            </button>
-            <button 
-              @click="selectedPosition = 3" 
-              :class="[
-                'px-3 py-1 rounded',
-                selectedPosition === 3 
-                  ? 'bg-blue-500 text-white font-medium shadow' 
-                  : 'bg-white text-blue-500 border border-blue-300'
-              ]"
-            >
-              Trăm
-            </button>
-            <button 
-              @click="selectedPosition = 4" 
-              :class="[
-                'px-3 py-1 rounded',
-                selectedPosition === 4 
-                  ? 'bg-blue-500 text-white font-medium shadow' 
-                  : 'bg-white text-blue-500 border border-blue-300'
-              ]"
-            >
-              Chục
-            </button>
-            <button 
-              @click="selectedPosition = 5" 
-              :class="[
-                'px-3 py-1 rounded',
-                selectedPosition === 5 
-                  ? 'bg-blue-500 text-white font-medium shadow' 
-                  : 'bg-white text-blue-500 border border-blue-300'
-              ]"
-            >
-              Đơn vị
-            </button>
-          </div>
-
           <!-- Options -->
           <div class="grid grid-cols-2 text-center text-[#F18CB1] font-medium text-lg border-t border-gray-200">
             <div class="border border-gray-200 py-2 cursor-pointer" @click="openNumberPicker('up')">
@@ -280,6 +221,7 @@
     :initialAmount="betAmount"
     :initialOptions="quickOptions"
     :optionTitle="'Đặt cược ' + (selectedOption === 'up' ? 'Trên' : selectedOption === 'down' ? 'Dưới' : selectedOption)"
+    :walletBalance="walletBalance"
     @confirm="handleConfirm"
     @cancel="handleCancel"
   />
@@ -292,6 +234,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { randomService } from '../services/random'
 import { betService } from '../services/bet'
 import { authService } from '../services/auth'
+import { eventBus } from '../utils/eventBus'
 
 // Tab state management
 const activeTab = ref('so15') // Default to "Số 1 ~ 5" tab
@@ -303,10 +246,11 @@ const betAmount = ref(100)
 const quickOptions = ref([50, 100, 150, 200, 250, 300])
 
 // Bet state
-const selectedPosition = ref(1) // Default to position 1 (chục ngàn)
+const selectedPosition = ref(1) // Default to position 1 (always set to 1)
 const isPlacingBet = ref(false) // Flag to indicate if a bet is being placed
 const betError = ref('') // Error message if bet fails
 const betSuccess = ref(false) // Flag to indicate if bet was successful
+const walletBalance = ref(0) // User's wallet balance
 
 // Random number state
 const currentLevel = ref(3) // Default to Level 3
@@ -502,7 +446,7 @@ const startCountdown = (level, generatedTime = null) => {
       const isCommandExecutionTime = 
         (level === 1 && currentSecond === 1) || 
         (level === 3 && currentSecond === 21) || 
-        (level === 5 && currentSecond === 42)
+        (level === 5 && currentSecond === 41)
       
       console.log(`Level ${level}: Đếm ngược kết thúc, thời điểm hiện tại: ${currentTime.toLocaleTimeString()}, giây: ${currentSecond}`)
       console.log(`Level ${level}: Đúng thời điểm gọi API? ${isCommandExecutionTime ? 'Có' : 'Không'}`)
@@ -593,7 +537,7 @@ const handleConfirm = async (amount) => {
     // Chuẩn bị dữ liệu đặt cược
     const betData = {
       random_number: randomData.value.number,
-      target: selectedPosition.value, // Vị trí mục tiêu (1-5)
+      target: 1, // Vị trí mục tiêu luôn là 1
       bet_type: selectedOption.value, // 'up' hoặc 'down'
       value: amount, // Số tiền đặt cược
       level: currentLevel.value.toString(), // Cấp độ đặt cược
@@ -609,10 +553,14 @@ const handleConfirm = async (amount) => {
     
     if (response.success) {
       betSuccess.value = true
-      // Tự động ẩn thông báo thành công sau 3 giây
+      // Cập nhật số tiền trong ví và thông báo cho FooterAccount
+      await fetchUserWalletBalance()
+      // Kích hoạt sự kiện cập nhật số dư ví
+      eventBus.emit('update-wallet')
+      // Tự động ẩn thông báo thành công sau 1 giây
       setTimeout(() => {
         betSuccess.value = false
-      }, 3000)
+      }, 1000)
     } else {
       betError.value = response.message || 'Đặt cược thất bại'
     }
@@ -634,6 +582,21 @@ const handleCancel = () => {
   showNumberPicker.value = false
 }
 
+// Fetch user wallet balance
+const fetchUserWalletBalance = async () => {
+  if (authService.isAuthenticated()) {
+    try {
+      const userData = await authService.getCurrentUser()
+      if (userData && userData.wallet) {
+        walletBalance.value = parseFloat(userData.wallet)
+        console.log('User wallet balance:', walletBalance.value)
+      }
+    } catch (error) {
+      console.error('Error fetching user wallet balance:', error)
+    }
+  }
+}
+
 // Lifecycle hooks
 onMounted(() => {
   // Initialize all levels
@@ -650,6 +613,9 @@ onMounted(() => {
       }
     })
   }, 1000) // Delay to avoid too many simultaneous requests
+  
+  // Fetch user wallet balance
+  fetchUserWalletBalance()
 })
 
 onBeforeUnmount(() => {

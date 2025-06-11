@@ -8,7 +8,7 @@
       <!-- Jackpot Animation -->
       <div class="jackpot-animation bg-gradient-to-b from-[#FFD700] to-[#FFA500] p-6 text-center">
         <div class="animate-bounce text-6xl mb-4">💰</div>
-        <h2 class="text-3xl font-bold text-white mb-2 animate-pulse">NỔ HŨ!!!</h2>
+        <h2 class="text-3xl font-bold text-white mb-2 animate-pulse">TRÚNG THƯỞNG!!!</h2>
         <div class="text-white text-xl font-semibold">Chúc mừng bạn!</div>
         
         <!-- Confetti Animation -->

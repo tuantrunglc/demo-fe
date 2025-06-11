@@ -31,7 +31,7 @@ export const betService = {
    * Tạo một bet mới
    * @param {Object} betData - Dữ liệu bet
    * @param {number} betData.random_number - Số ngẫu nhiên liên quan đến lượt đặt cược
-   * @param {number} betData.target - Vị trí mục tiêu (1: chục ngàn, 2: ngàn, 3: trăm, 4: chục, 5: đơn vị)
+   * @param {number} betData.target - Vị trí mục tiêu (luôn là 1)
    * @param {string} betData.bet_type - Loại cược: lên (up) hoặc xuống (down)
    * @param {number} betData.value - Số tiền đặt cược
    * @param {string} [betData.level] - Cấp độ đặt cược (tùy chọn)

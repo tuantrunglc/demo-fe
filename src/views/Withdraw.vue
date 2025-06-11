@@ -59,10 +59,6 @@
               <span>Số tài khoản:</span>
               <span class="font-medium">{{ selectedCard.accountNumber }}</span>
             </div>
-            <div class="flex justify-between">
-              <span>Chi nhánh:</span>
-              <span class="font-medium">{{ selectedCard.branch }}</span>
-            </div>
           </div>
         </div>
 
@@ -77,39 +73,14 @@
                 v-model="withdrawAmount" 
                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#08224C]"
                 placeholder="Nhập số tiền muốn rút"
-                min="50000"
+                min="10"
                 :max="maxWithdrawAmount"
                 required
               />
-              <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">VND</span>
+              <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"></span>
             </div>
-            <p class="text-xs text-gray-500">Số tiền tối thiểu: 50,000 VND</p>
+            <p class="text-xs text-gray-500">Số tiền tối thiểu: 10</p>
           </div>
-
-          <!-- Quick Amount Buttons -->
-          <div class="grid grid-cols-3 gap-2">
-            <button 
-              type="button" 
-              v-for="amount in quickAmounts" 
-              :key="amount"
-              @click="withdrawAmount = amount"
-              class="border border-gray-300 rounded-lg py-2 text-center hover:bg-gray-50 transition-colors focus:outline-none"
-            >
-              {{ formatCurrency(amount) }}
-            </button>
-          </div>
-
-          <!-- Note Input -->
-          <div class="flex flex-col gap-1 mt-2">
-            <label class="text-[#08224C] font-medium text-sm">Ghi chú (không bắt buộc)</label>
-            <textarea 
-              v-model="withdrawNote" 
-              class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#08224C] resize-none"
-              placeholder="Nhập ghi chú nếu cần"
-              rows="3"
-            ></textarea>
-          </div>
-
           <!-- Submit Button -->
           <button 
             type="submit" 
@@ -128,7 +99,7 @@
           <ul class="list-disc pl-5 space-y-1">
             <li>Yêu cầu rút tiền sẽ được xử lý trong vòng 24 giờ làm việc.</li>
             <li>Phí rút tiền: 0% (miễn phí).</li>
-            <li>Số tiền tối thiểu cho mỗi lần rút: 50,000 VND.</li>
+            <li>Số tiền tối thiểu cho mỗi lần rút: 10</li>
             <li>Vui lòng kiểm tra thông tin tài khoản ngân hàng trước khi gửi yêu cầu.</li>
           </ul>
         </div>
@@ -262,7 +233,7 @@ import { authService } from '../services/auth.js'
 const router = useRouter()
 
 // Account balance
-const accountBalance = ref('0 VNĐ')
+const accountBalance = ref('0')
 const numericBalance = ref(0) // Numeric value for calculations
 
 // Bank cards data
@@ -296,7 +267,7 @@ const errorMessage = ref('')
 // Computed properties
 const isValidAmount = computed(() => {
   const amount = Number(withdrawAmount.value)
-  const valid = amount >= 50000 && amount <= numericBalance.value
+  const valid = amount >= 10 && amount <= numericBalance.value
   console.log('Validating amount:', {
     amount,
     numericBalance: numericBalance.value,
@@ -334,8 +305,8 @@ const submitWithdrawal = async () => {
   const amount = Number(withdrawAmount.value)
   
   // Validate amount
-  if (amount < 50000) {
-    errorMessage.value = 'Số tiền rút tối thiểu là 50,000 VNĐ.'
+  if (amount < 10) {
+    errorMessage.value = 'Số tiền rút tối thiểu là 10.'
     showErrorModal.value = true
     return
   }
@@ -379,7 +350,7 @@ const submitWithdrawal = async () => {
       
       // Chuyển đổi wallet từ string sang number
       numericBalance.value = parseFloat(walletBalance)
-      accountBalance.value = new Intl.NumberFormat('vi-VN').format(numericBalance.value) + ' VNĐ'
+      accountBalance.value = new Intl.NumberFormat('vi-VN').format(numericBalance.value)
       console.log('Updated wallet balance:', numericBalance.value)
       
       // Show success modal
@@ -436,7 +407,7 @@ onMounted(async () => {
     if (userData && userData.wallet !== undefined) {
       // Chuyển đổi wallet từ string sang number để đảm bảo tính toán chính xác
       numericBalance.value = parseFloat(userData.wallet)
-      accountBalance.value = new Intl.NumberFormat('vi-VN').format(numericBalance.value) + ' VNĐ'
+      accountBalance.value = new Intl.NumberFormat('vi-VN').format(numericBalance.value)
       console.log('Wallet balance:', numericBalance.value)
     }
     

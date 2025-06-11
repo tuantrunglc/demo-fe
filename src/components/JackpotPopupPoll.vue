@@ -8,7 +8,7 @@
       <!-- Jackpot Animation -->
       <div class="jackpot-animation bg-gradient-to-b from-[#FFD700] to-[#FFA500] p-6 text-center">
         <div class="animate-bounce text-6xl mb-4">💰</div>
-        <h2 class="text-3xl font-bold text-white mb-2 animate-pulse">NỔ HŨ!!!</h2>
+        <h2 class="text-3xl font-bold text-white mb-2 animate-pulse">TRÚNG THƯỞNG!!!</h2>
         <div class="text-white text-xl font-semibold">Chúc mừng bạn đã là người may mắn!</div>
         <div class="text-white text-lg mt-2">Hãy liên hệ với CSKH để nhận quà</div>
         
@@ -36,7 +36,7 @@
         </div>
         
         <button @click="closePopup" class="bg-[#08224C] text-white px-6 py-3 rounded-full font-bold hover:bg-opacity-90 transition-colors">
-          Đóng
+          OK
         </button>
       </div>
     </div>

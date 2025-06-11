@@ -47,6 +47,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { authService } from '../services/auth'
+import { eventBus } from '../utils/eventBus'
 
 const accountId = ref('4482')
 const accountBalance = ref('0')
@@ -60,20 +61,10 @@ const toggleVisibility = () => {
 
 // Không cần hàm loadCrispScript riêng biệt nữa vì đã tích hợp vào toggleCrispChat
 
-// Function to toggle Crisp Chat visibility
-const toggleCrispChat = () => {
-  // Sử dụng cách tiếp cận trực tiếp với script inline
-  // Điều này đảm bảo script được tải và chatbox hiển thị ngay lập tức
+// Preload Crisp script
+const preloadCrispScript = () => {
+  if (isCrispLoaded.value || window.$crisp) return;
   
-  // Nếu Crisp đã được tải, chỉ cần hiển thị nó
-  if (window.$crisp) {
-    window.$crisp.push(["do", "chat:show"])
-    window.$crisp.push(["do", "chat:open"])
-    isCrispVisible.value = true
-    return
-  }
-  
-  // Nếu Crisp chưa được tải, tải và hiển thị nó
   window.$crisp = [];
   window.CRISP_WEBSITE_ID = "2e9f022b-b3d4-4906-95f3-3056b4d2a2f3";
   
@@ -82,11 +73,46 @@ const toggleCrispChat = () => {
   script.src = "https://client.crisp.chat/l.js";
   script.async = true;
   
-  // Khi script được tải, hiển thị chatbox
+  // Khi script được tải, đánh dấu là đã tải
+  script.onload = () => {
+    isCrispLoaded.value = true;
+    console.log('Crisp script preloaded');
+  };
+  
+  // Thêm script vào head
+  document.head.appendChild(script);
+}
+
+// Function to toggle Crisp Chat visibility - optimized for speed
+const toggleCrispChat = () => {
+  // Nếu Crisp đã được tải, hiển thị nó ngay lập tức
+  if (window.$crisp) {
+    // Sử dụng requestAnimationFrame để đảm bảo UI được cập nhật trước khi hiển thị chat
+    requestAnimationFrame(() => {
+      window.$crisp.push(["do", "chat:show"]);
+      window.$crisp.push(["do", "chat:open"]);
+      isCrispVisible.value = true;
+    });
+    return;
+  }
+  
+  // Nếu Crisp chưa được tải, tải và hiển thị nó
+  window.$crisp = [];
+  window.CRISP_WEBSITE_ID = "2e9f022b-b3d4-4906-95f3-3056b4d2a2f3";
+  
+  // Tạo script element với priority hints
+  const script = document.createElement('script');
+  script.src = "https://client.crisp.chat/l.js";
+  script.async = true;
+  
+  // Thêm thuộc tính để tăng ưu tiên tải
+  script.setAttribute('importance', 'high');
+  
+  // Khi script được tải, hiển thị chatbox ngay lập tức
   script.onload = () => {
     isCrispLoaded.value = true;
     
-    // Đảm bảo chatbox được mở
+    // Giảm thời gian chờ xuống 100ms
     setTimeout(() => {
       if (window.$crisp) {
         window.$crisp.push(["do", "chat:show"]);
@@ -94,7 +120,7 @@ const toggleCrispChat = () => {
         isCrispVisible.value = true;
         console.log('Crisp chat opened');
       }
-    }, 500);
+    }, 100);
   };
   
   // Thêm script vào head
@@ -116,13 +142,36 @@ const formatBalance = (balance) => {
   return numBalance.toString()
 }
 
-onMounted(async () => {
+// Hàm cập nhật số dư ví
+const updateWalletBalance = async () => {
   try {
-    const response = await authService.getUserProfile()
+    const response = await authService.getUserProfile();
     if (response && response.data) {
       accountId.value = response.data.user?.id || '0'
       accountBalance.value = response.data.wallet_info?.balance || '0'
     }
+  } catch (error) {
+    console.error('Error fetching account info:', error)
+  }
+}
+
+onMounted(async () => {
+  try {
+    // Tải song song cả thông tin người dùng và script Crisp
+    const profilePromise = authService.getUserProfile();
+    
+    // Tải trước script Crisp để sẵn sàng khi người dùng nhấp vào nút chat
+    preloadCrispScript();
+    
+    // Đợi thông tin người dùng
+    const response = await profilePromise;
+    if (response && response.data) {
+      accountId.value = response.data.user?.id || '0'
+      accountBalance.value = response.data.wallet_info?.balance || '0'
+    }
+    
+    // Đăng ký lắng nghe sự kiện cập nhật số dư ví
+    eventBus.on('update-wallet', updateWalletBalance);
   } catch (error) {
     console.error('Error fetching account info:', error)
   }
@@ -133,15 +182,19 @@ onUnmounted(() => {
   if (isCrispLoaded.value && isCrispVisible.value) {
     window.$crisp.push(["do", "chat:hide"])
   }
+  
+  // Hủy đăng ký sự kiện
+  eventBus.off('update-wallet', updateWalletBalance);
 })
 </script>
 
 <style scoped>
 .nav-link {
   position: relative;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
   padding: 8px 12px;
   border-radius: 8px;
+  will-change: transform, background-color;
 }
 
 .active-link {
@@ -154,7 +207,8 @@ onUnmounted(() => {
 .active-link .nav-icon {
   transform: scale(1.3);
   display: inline-block;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
+  will-change: transform;
 }
 
 .indicator {
@@ -166,7 +220,8 @@ onUnmounted(() => {
   height: 4px;
   background-color: #F18CB1;
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: width 0.2s ease;
+  will-change: width;
 }
 
 .active-link .indicator {
