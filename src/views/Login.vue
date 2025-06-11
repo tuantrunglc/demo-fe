@@ -86,6 +86,8 @@
 </template>
 
 <script>
+import { authService } from '../services/auth'
+
 export default {
   name: 'LoginView',
   data() {
@@ -100,16 +102,28 @@ export default {
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
     },
-    login() {
-      // Temporary login logic with hardcoded credentials
-      if (this.username === 'admin' && this.password === 'admin123') {
-        // Store a fake token
-        localStorage.setItem('token', 'fake-jwt-token-for-testing');
-        // Redirect to home page
-        this.$router.push('/');
-      } else {
-        this.errorMessage = 'Tài khoản hoặc mật khẩu không đúng';
-        console.log('Login failed. Use username: admin, password: admin123');
+    async login() {
+      try {
+        this.errorMessage = '';
+        
+        const response = await authService.login({
+          username: this.username,
+          password: this.password
+        });
+        
+        // Nếu đăng nhập thành công, chuyển hướng đến trang đích
+        // Token đã được lưu và cache đã được xóa trong authService
+        
+        // Kiểm tra xem có tham số redirect trong URL không
+        const redirectPath = this.$route.query.redirect || '/';
+        this.$router.push(redirectPath);
+      } catch (error) {
+        console.error('Login error:', error);
+        if (error.response && error.response.data && error.response.data.message) {
+          this.errorMessage = error.response.data.message;
+        } else {
+          this.errorMessage = 'Tài khoản hoặc mật khẩu không đúng';
+        }
       }
     }
   }

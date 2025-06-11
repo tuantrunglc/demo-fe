@@ -4,8 +4,56 @@
   </div>
 </template>
 
-<script setup>
-// App.vue using Composition API
+<script>
+import { authService } from './services/auth'
+
+export default {
+  name: 'App',
+  created() {
+    // Kiểm tra xác thực khi ứng dụng khởi động
+    this.checkAuth()
+    
+    // Thêm sự kiện lắng nghe khi token thay đổi
+    window.addEventListener('storage', this.handleStorageChange)
+  },
+  beforeUnmount() {
+    // Xóa sự kiện lắng nghe khi component bị hủy
+    window.removeEventListener('storage', this.handleStorageChange)
+  },
+  methods: {
+    async checkAuth() {
+      // Kiểm tra xem có token không
+      const isAuthenticated = authService.isAuthenticated()
+      
+      if (isAuthenticated) {
+        // Nếu có token, kiểm tra tính hợp lệ của token
+        try {
+          await authService.checkTokenValidity()
+        } catch (error) {
+          console.error('Token validation error:', error)
+        }
+      }
+      
+      // Kiểm tra lại sau khi đã validate token
+      const stillAuthenticated = authService.isAuthenticated()
+      const currentRoute = this.$router.currentRoute.value
+      
+      // Nếu route yêu cầu xác thực và người dùng chưa đăng nhập
+      if (currentRoute.meta && currentRoute.meta.requiresAuth && !stillAuthenticated) {
+        this.$router.push({
+          path: '/login',
+          query: { redirect: currentRoute.fullPath }
+        })
+      }
+    },
+    handleStorageChange(event) {
+      // Nếu token bị thay đổi (ví dụ: bị xóa trong tab khác)
+      if (event.key === 'token' && !event.newValue) {
+        this.checkAuth()
+      }
+    }
+  }
+}
 </script>
 
 <style>

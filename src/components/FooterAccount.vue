@@ -1,44 +1,196 @@
 <template>
-  <div class="p-3 border-b">
-    <div class="flex justify-between items-center">
-      <div class="flex items-center">
-        <span class="text-sm">Số dư tài khoản ID: {{ accountId }}</span>
+  <div class="w-full pt-2">
+    <!-- Account Balance -->
+    <div class="bg-[#2B4460] text-white font-medium rounded-full px-5 mx-auto mt-2 mb-2 h-[40px] flex items-center justify-between max-w-[90%]">
+      <div>
+        <span class="text-sm">ID: {{ accountId || 'Loading...' }}</span>
       </div>
       <div class="flex items-center">
-        <span class="font-medium mr-2">{{ isHidden ? '****' : accountBalance }}</span>
-        <button @click="toggleVisibility" class="text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path v-if="isHidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path v-if="isHidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-          </svg>
+        <span class="text-sm mr-2">Số dư:</span>
+        <span class="text-[#F18CB1] font-medium">
+          <span v-if="!isHidden">{{ formatBalance(accountBalance) }}</span>
+          <span v-else>***</span>
+        </span>
+        <button @click="toggleVisibility" class="focus:outline-none ml-2">
+          <span v-if="isHidden" class="text-xs">👁️</span>
+          <span v-else class="text-xs">🙈</span>
         </button>
       </div>
+    </div>
+    
+    <!-- Navigation Menu -->
+    <div class="flex justify-around text-sm text-[#08224C] font-medium py-2 w-full">
+      <router-link to="/trends" class="flex flex-col items-center nav-link" exact-active-class="active-link">
+        <span class="nav-icon">📈</span><span>Xu hướng</span>
+        <div class="indicator"></div>
+      </router-link>
+      <router-link to="/transactions" class="flex flex-col items-center nav-link" exact-active-class="active-link">
+        <span class="nav-icon">💱</span><span>Giao dịch</span>
+        <div class="indicator"></div>
+      </router-link>
+      <router-link to="/" class="flex flex-col items-center nav-link" exact-active-class="active-link">
+        <span class="nav-icon">🏠</span><span>Trang chủ</span>
+        <div class="indicator"></div>
+      </router-link>
+      <router-link to="/member" class="flex flex-col items-center nav-link" exact-active-class="active-link">
+        <span class="nav-icon">👤</span><span>Thành viên</span>
+        <div class="indicator"></div>
+      </router-link>
+      <button @click="toggleCrispChat" class="flex flex-col items-center nav-link">
+        <span class="nav-icon">💬</span><span>Chat</span>
+        <div class="indicator"></div>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { authService } from '../services/auth'
 
 const accountId = ref('4482')
 const accountBalance = ref('0')
 const isHidden = ref(true)
+const isCrispLoaded = ref(false)
+const isCrispVisible = ref(false)
 
 const toggleVisibility = () => {
   isHidden.value = !isHidden.value
 }
 
+// Không cần hàm loadCrispScript riêng biệt nữa vì đã tích hợp vào toggleCrispChat
+
+// Function to toggle Crisp Chat visibility
+const toggleCrispChat = () => {
+  // Sử dụng cách tiếp cận trực tiếp với script inline
+  // Điều này đảm bảo script được tải và chatbox hiển thị ngay lập tức
+  
+  // Nếu Crisp đã được tải, chỉ cần hiển thị nó
+  if (window.$crisp) {
+    window.$crisp.push(["do", "chat:show"])
+    window.$crisp.push(["do", "chat:open"])
+    isCrispVisible.value = true
+    return
+  }
+  
+  // Nếu Crisp chưa được tải, tải và hiển thị nó
+  window.$crisp = [];
+  window.CRISP_WEBSITE_ID = "2e9f022b-b3d4-4906-95f3-3056b4d2a2f3";
+  
+  // Tạo script element
+  const script = document.createElement('script');
+  script.src = "https://client.crisp.chat/l.js";
+  script.async = true;
+  
+  // Khi script được tải, hiển thị chatbox
+  script.onload = () => {
+    isCrispLoaded.value = true;
+    
+    // Đảm bảo chatbox được mở
+    setTimeout(() => {
+      if (window.$crisp) {
+        window.$crisp.push(["do", "chat:show"]);
+        window.$crisp.push(["do", "chat:open"]);
+        isCrispVisible.value = true;
+        console.log('Crisp chat opened');
+      }
+    }, 500);
+  };
+  
+  // Thêm script vào head
+  document.head.appendChild(script);
+}
+
+// Format balance to remove decimal places if they are .00
+const formatBalance = (balance) => {
+  if (!balance) return '0'
+  
+  // Convert to number if it's a string
+  const numBalance = typeof balance === 'string' ? parseFloat(balance) : balance
+  
+  // Check if the number has no decimal places or only zeros after decimal
+  if (Number.isInteger(numBalance) || numBalance.toFixed(2).endsWith('.00')) {
+    return Math.floor(numBalance).toString()
+  }
+  
+  return numBalance.toString()
+}
+
 onMounted(async () => {
   try {
-    const response = await axios.get('/api/account-info')
-    if (response.data) {
-      accountId.value = response.data.id
-      accountBalance.value = response.data.balance
+    const response = await authService.getUserProfile()
+    if (response && response.data) {
+      accountId.value = response.data.user?.id || '0'
+      accountBalance.value = response.data.wallet_info?.balance || '0'
     }
   } catch (error) {
     console.error('Error fetching account info:', error)
   }
 })
+
+onUnmounted(() => {
+  // Clean up if needed
+  if (isCrispLoaded.value && isCrispVisible.value) {
+    window.$crisp.push(["do", "chat:hide"])
+  }
+})
 </script>
+
+<style scoped>
+.nav-link {
+  position: relative;
+  transition: all 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.active-link {
+  color: #F18CB1;
+  font-weight: 600;
+  transform: translateY(-4px);
+  background-color: rgba(241, 140, 177, 0.1);
+}
+
+.active-link .nav-icon {
+  transform: scale(1.3);
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.indicator {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 4px;
+  background-color: #F18CB1;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.active-link .indicator {
+  width: 70%;
+  box-shadow: 0 0 8px rgba(241, 140, 177, 0.5);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Account balance styles */
+.bg-[#2B4460] {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+</style>

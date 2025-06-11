@@ -157,8 +157,16 @@ export default {
           password: this.password
         });
         
-        // If we get here, registration was successful
-        this.$router.push('/login');
+        // Nếu đăng ký thành công và có token
+        if (response && response.token) {
+          // Token đã được lưu và cache đã được xóa trong authService
+          
+          // Chuyển hướng đến trang chủ
+          this.$router.push('/');
+        } else {
+          // Nếu không có token, chuyển hướng đến trang đăng nhập
+          this.$router.push('/login');
+        }
       } catch (error) {
         console.error('Registration error:', error);
         if (error.response && error.response.data && error.response.data.message) {

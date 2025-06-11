@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import { authService } from '../services/auth'
 
 const routes = [
   {
@@ -38,8 +39,26 @@ const routes = [
   },
   {
     path: '/chat',
-    name: 'HomePage',
-    component: () => import('../views/HomePage.vue'),
+    name: 'chat',
+    component: () => import('../views/Chat.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/change-password',
+    name: 'ChangePassword',
+    component: () => import('../views/ChangePassword.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/bank-cards',
+    name: 'BankCards',
+    component: () => import('../views/BankCards.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/withdraw',
+    name: 'Withdraw',
+    component: () => import('../views/Withdraw.vue'),
     meta: { requiresAuth: true }
   }
 ]
@@ -51,12 +70,14 @@ const router = createRouter({
 
 // Navigation guard to check authentication
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('token') // Check if user is authenticated
+  const isAuthenticated = authService.isAuthenticated() // Check if user is authenticated
   
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // If route requires auth and user is not authenticated, redirect to login
     if (!isAuthenticated) {
-      next('/login')
+      // Lưu lại trang mà người dùng đang cố gắng truy cập
+      const redirectPath = to.fullPath;
+      next({ path: '/login', query: { redirect: redirectPath } })
     } else {
       next()
     }
