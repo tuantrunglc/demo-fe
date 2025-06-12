@@ -79,7 +79,7 @@ export const transactionService = {
         if (userData && userData.wallet !== undefined) {
           return {
             balance: userData.wallet,
-            formattedBalance: new Intl.NumberFormat('vi-VN').format(userData.wallet) + ' VNĐ'
+            formattedBalance: new Intl.NumberFormat('vi-VN').format(userData.wallet)
           }
         }
         throw new Error('Không thể lấy thông tin ví')

@@ -520,7 +520,7 @@ const showNotification = (type, message) => {
 }
 
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ'
+  return new Intl.NumberFormat('vi-VN').format(amount)
 }
 
 const formatDate = (dateString) => {

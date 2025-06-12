@@ -64,7 +64,7 @@ const audioElement = ref(null)
 
 // Format currency
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ'
+  return new Intl.NumberFormat('vi-VN').format(amount)
 }
 
 // Get random color for confetti

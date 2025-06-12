@@ -26,15 +26,16 @@ const closeJackpot = () => {
 }
 
 // Kiểm tra xem có sự kiện nổ hũ nào đang chờ hiển thị không
-const checkJackpot = async () => {
+const checkJackpot = async (skipCache = false) => {
   try {
     // Nếu đang hiển thị popup, không cần kiểm tra
     if (showJackpot.value) return
     
-    const response = await jackpotPollService.checkJackpot()
+    console.log(`[JackpotPolling] Kiểm tra jackpot (${new Date().toLocaleTimeString()})${skipCache ? ' - bỏ qua cache' : ''}`)
+    const response = await jackpotPollService.checkJackpot(skipCache)
     
     if (response.success && response.data) {
-      console.log('Jackpot found:', response.data)
+      console.log('[JackpotPolling] Jackpot found:', response.data)
       jackpotData.value = response.data
       showJackpot.value = true
       
@@ -42,42 +43,42 @@ const checkJackpot = async () => {
       stopPolling()
     }
   } catch (error) {
-    console.error('Error checking jackpot:', error)
+    console.error('[JackpotPolling] Error checking jackpot:', error)
   }
 }
 
 // Bắt đầu polling
-// Sử dụng Exponential Backoff để giảm tải server
+// Sử dụng chiến lược polling thông minh để vượt qua cache
 const startPolling = () => {
   if (!pollingInterval) {
-    // Bắt đầu với 5 giây, sau đó tăng dần nếu không có kết quả
-    let pollTime = 5000
-    const maxPollTime = 30000 // Tối đa 30 giây
+    // Cấu hình polling
+    const pollTime = 5000 // Cố định 5 giây
+    let pollCount = 0 // Đếm số lần poll
     
     const poll = async () => {
+      if (!isPolling.value) return
+      
       try {
-        const result = await checkJackpot()
+        pollCount++
         
-        // Nếu không có jackpot, tăng thời gian chờ
-        if (!result.success || !result.data) {
-          pollTime = Math.min(pollTime * 1.5, maxPollTime)
-        } else {
-          // Nếu có jackpot, reset về 5 giây
-          pollTime = 5000
-        }
+        // Mỗi 3 lần poll, bỏ qua cache để đảm bảo nhận được dữ liệu mới nhất
+        // Điều này giúp vượt qua cache 60 giây trên server
+        const skipCache = pollCount % 3 === 0
+        await checkJackpot(skipCache)
       } catch (error) {
-        console.error('Polling error:', error)
-        // Nếu có lỗi, tăng thời gian chờ
-        pollTime = Math.min(pollTime * 1.5, maxPollTime)
+        console.error('[JackpotPolling] Polling error:', error)
       }
       
-      // Đặt lịch cho lần poll tiếp theo
-      pollingInterval = setTimeout(poll, pollTime)
+      // Đặt lịch cho lần poll tiếp theo nếu vẫn đang polling
+      if (isPolling.value) {
+        pollingInterval = setTimeout(poll, pollTime)
+      }
     }
     
-    // Bắt đầu polling
+    // Bắt đầu polling ngay lập tức
     poll()
     isPolling.value = true
+    console.log(`[JackpotPolling] Bắt đầu polling mỗi ${pollTime}ms`)
   }
 }
 
@@ -90,14 +91,18 @@ const stopPolling = () => {
 }
 
 onMounted(() => {
-  // Kiểm tra ngay khi component được mount
-  checkJackpot()
+  console.log('[JackpotPolling] Component mounted')
   
-  // Thiết lập polling để kiểm tra sự kiện nổ hũ mới mỗi 5 giây
+  // Kiểm tra ngay khi component được mount - bỏ qua cache
+  checkJackpot(true)
+  
+  // Thiết lập polling để kiểm tra sự kiện nổ hũ mới
   startPolling()
 })
 
 onUnmounted(() => {
+  console.log('[JackpotPolling] Component unmounted')
+  
   // Clear polling interval khi component unmount
   stopPolling()
   isPolling.value = false

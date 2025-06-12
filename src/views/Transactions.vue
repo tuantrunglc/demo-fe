@@ -340,17 +340,17 @@ const getTransactionStatusText = (status) => {
 const formatCurrency = (amount) => {
   // Kiểm tra nếu amount là undefined hoặc null
   if (amount === undefined || amount === null) {
-    return '0 VNĐ'
+    return '0'
   }
   
   // Đảm bảo amount là số
   const numericAmount = Number(amount)
   if (isNaN(numericAmount)) {
     console.warn('Invalid amount value:', amount)
-    return '0 VNĐ'
+    return '0'
   }
   
-  return new Intl.NumberFormat('vi-VN').format(numericAmount) + ' VNĐ'
+  return new Intl.NumberFormat('vi-VN').format(numericAmount)
 }
 
 const formatDate = (dateString) => {
