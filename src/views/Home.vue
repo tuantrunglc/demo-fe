@@ -31,7 +31,7 @@
       <!-- Countdown -->
       <div class="flex flex-col text-white text-base px-3 mb-2">
         <div class="flex justify-between mb-1">
-          <div>Kỳ tiếp theo: <span class="font-medium">{{ randomData.number_of_periods ? randomData.number_of_periods + 1 : '-----' }}</span></div>
+          <div>Kỳ tiếp theo: <span class="font-medium">{{ randomData.number_of_periods ? Number(randomData.number_of_periods) + 1 : '-----' }}</span></div>
           <div class="flex items-center gap-1">
             ⏰ <span :class="{ 'text-red-400 font-bold animate-pulse': countdown <= 10 }">{{ formattedCountdown }}</span>
           </div>
