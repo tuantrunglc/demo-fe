@@ -50,8 +50,18 @@ export const transactionService = {
   
   // Lấy lịch sử giao dịch của người dùng
   async getTransactionHistory(limit = 10) {
-    return apiClient.get(`/transactions/history?limit=${limit}`)
-      .then(response => response.data)
+    try {
+      const response = await apiClient.get(`/transactions/history?limit=${limit}`);
+      console.log('Transaction API raw response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching transaction history:', error.response ? error.response.data : error.message);
+      // Trả về một đối tượng lỗi có cấu trúc để component có thể xử lý
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể tải lịch sử giao dịch'
+      };
+    }
   },
   
   // Lấy thông tin ví của người dùng
