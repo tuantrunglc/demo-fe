@@ -11,6 +11,31 @@
       </svg>
     </button>
     
+    <!-- Thông báo xác nhận đăng xuất khi đã đăng nhập -->
+    <div v-if="showLogoutConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4 text-blue-600">Bạn đã đăng nhập</h3>
+        <p class="mb-4">
+          Bạn đang đăng nhập với tài khoản <strong>{{ currentUser?.name }}</strong>.
+          Bạn cần đăng xuất trước khi đăng ký tài khoản mới.
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button 
+            @click="showLogoutConfirm = false" 
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+          >
+            Hủy
+          </button>
+          <button 
+            @click="handleLogoutAndRegister" 
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Đăng xuất và tiếp tục
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <!-- Header section with logo, title and image -->
     <div class="h-[140px] flex flex-col justify-center items-center w-full relative mt-[40px]">
       <!-- Logo and develop-vn text -->
@@ -129,8 +154,15 @@ export default {
       username: '',
       password: '',
       confirmPassword: '',
-      errorMessage: ''
+      errorMessage: '',
+      isLoggedIn: false,
+      currentUser: null,
+      showLogoutConfirm: false
     }
+  },
+  created() {
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    this.checkLoginStatus();
   },
   methods: {
     goBack() {
@@ -142,9 +174,60 @@ export default {
     toggleConfirmPasswordVisibility() {
       this.showConfirmPassword = !this.showConfirmPassword;
     },
+    async checkLoginStatus() {
+      try {
+        this.isLoggedIn = authService.isAuthenticated();
+        
+        if (this.isLoggedIn) {
+          // Lấy thông tin người dùng hiện tại
+          const userData = await authService.getCurrentUser();
+          this.currentUser = userData;
+          
+          // Hiển thị thông báo xác nhận
+          this.showLogoutConfirm = true;
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+      }
+    },
+    async handleLogoutAndRegister() {
+      try {
+        // Lưu thông tin đăng ký hiện tại
+        const registerData = {
+          username: this.username,
+          password: this.password,
+          confirmPassword: this.confirmPassword
+        };
+        
+        // Đăng xuất
+        await authService.logout();
+        
+        // Khôi phục thông tin đăng ký
+        this.username = registerData.username;
+        this.password = registerData.password;
+        this.confirmPassword = registerData.confirmPassword;
+        
+        // Cập nhật trạng thái
+        this.isLoggedIn = false;
+        this.currentUser = null;
+        this.showLogoutConfirm = false;
+        
+        // Thông báo cho người dùng
+        alert('Đã đăng xuất khỏi tài khoản hiện tại. Bạn có thể tiếp tục đăng ký tài khoản mới.');
+      } catch (error) {
+        console.error('Error during logout:', error);
+        this.errorMessage = 'Không thể đăng xuất. Vui lòng thử lại.';
+      }
+    },
     async handleRegister() {
       try {
         this.errorMessage = '';
+        
+        // Kiểm tra nếu người dùng đã đăng nhập và chưa xác nhận đăng xuất
+        if (this.isLoggedIn && this.showLogoutConfirm) {
+          this.errorMessage = 'Bạn cần đăng xuất trước khi đăng ký tài khoản mới.';
+          return;
+        }
         
         // Check if passwords match
         if (this.password !== this.confirmPassword) {
@@ -157,15 +240,22 @@ export default {
           password: this.password
         });
         
-        // Nếu đăng ký thành công và có token
-        if (response && response.token) {
-          // Token đã được lưu và cache đã được xóa trong authService
-          
-          // Chuyển hướng đến trang chủ
-          this.$router.push('/');
-        } else {
-          // Nếu không có token, chuyển hướng đến trang đăng nhập
-          this.$router.push('/login');
+        // Nếu đăng ký thành công
+        if (response) {
+          // Nếu có token, lưu token và đăng nhập luôn
+          if (response.token) {
+            localStorage.setItem('token', response.token);
+            
+            // Hiển thị thông báo thành công
+            alert('Đăng ký thành công! Bạn đã được đăng nhập tự động.');
+            
+            // Chuyển hướng đến trang chính
+            this.$router.push('/');
+          } else {
+            // Trường hợp không có token (hiếm gặp)
+            alert('Đăng ký thành công! Vui lòng đăng nhập.');
+            this.$router.push('/login');
+          }
         }
       } catch (error) {
         console.error('Registration error:', error);

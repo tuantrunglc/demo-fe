@@ -61,11 +61,11 @@
                 </div>
               </div>
               <div :class="{
-                'text-green-500': bet.result === 'win',
-                'text-red-500': bet.result === 'lose',
-                'text-yellow-500': !bet.result
+                'text-green-500': bet.status === 'win',
+                'text-red-500': bet.status === 'lost',
+                'text-yellow-500': !bet.status
               }" class="font-medium">
-                {{ getBetResultText(bet.result) }}
+                {{ getBetResultText(bet.status) }}
               </div>
             </div>
             
@@ -75,17 +75,17 @@
                 <span class="font-medium">{{ formatCurrency(bet.value) }}</span>
               </div>
               <div class="flex justify-between">
-                <span>Kết quả:</span>
+                <span>Tiền lãi:</span>
                 <span class="font-medium" :class="{
-                  'text-green-500': bet.profit > 0,
-                  'text-red-500': bet.profit < 0
+                  'text-green-500': bet.amount > 0,
+                  'text-red-500': bet.amount < 0
                 }">
-                  {{ bet.profit > 0 ? '+' + formatCurrency(bet.profit) : formatCurrency(bet.profit) }}
+                  {{ bet.amount > 0 ? '+' + formatCurrency(bet.amount) : formatCurrency(bet.amount) }}
                 </span>
               </div>
               <div class="flex justify-between">
-                <span>Số ngẫu nhiên:</span>
-                <span class="font-medium">{{ bet.random_number }}</span>
+                <span>Số cược:</span>
+                <span class="font-medium">{{ bet.feature_number }}</span>
               </div>
               <div class="flex justify-between text-xs text-gray-400 mt-1">
                 <span>Thời gian:</span>
@@ -283,9 +283,8 @@ const getBetResultText = (result) => {
   if (!result) return 'Đang xử lý'
   
   const resultMap = {
-    'win': 'Thắng',
-    'lose': 'Thua',
-    'draw': 'Hòa'
+    'won': 'Thắng',
+    'lost': 'Thua'
   }
   return resultMap[result] || result
 }
