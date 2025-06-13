@@ -260,7 +260,7 @@ const isLoading = ref(false)
 // Countdown configuration for each level
 const countdownConfig = {
   1: { 
-    duration: 60, // 1 minute in seconds
+    duration: 60, // 1 phút một lần (60 giây)
     lastFetch: 0,
     countdown: ref(0),
     interval: null,
@@ -268,7 +268,7 @@ const countdownConfig = {
     data: ref({})
   },
   3: { 
-    duration: 180, // 3 minutes in seconds
+    duration: 180, // 3 phút một lần (180 giây)
     lastFetch: 0,
     countdown: ref(0),
     interval: null,
@@ -276,7 +276,7 @@ const countdownConfig = {
     data: ref({})
   },
   5: { 
-    duration: 300, // 5 minutes in seconds
+    duration: 300, // 5 phút một lần (300 giây)
     lastFetch: 0,
     countdown: ref(0),
     interval: null,
@@ -356,44 +356,44 @@ const calculateNextFetchTime = (level) => {
   // Reset milliseconds
   nextFetch.setMilliseconds(0)
   
+  // Đặt giây là 1 cho tất cả các level theo yêu cầu
+  nextFetch.setSeconds(1)
+  
   // Calculate next fetch time based on level
   if (level === 1) {
-    // Level 1: Next minute, second 1 (after command runs at second 0)
-    nextFetch.setSeconds(1)
+    // Level 1: 1 phút một lần, giây 1s
     
-    // If we've passed second 1 of current minute, move to next minute
+    // Nếu đã qua giây 1 của phút hiện tại, chuyển sang phút tiếp theo
     if (now.getSeconds() >= 1) {
       nextFetch.setMinutes(now.getMinutes() + 1)
     }
   } else if (level === 3) {
-    // Level 3: Next minute divisible by 3, second 21 (after command runs at second 20)
-    nextFetch.setSeconds(21)
+    // Level 3: 3 phút một lần, giây 1s
     
     const currentMinute = now.getMinutes()
     const remainder = currentMinute % 3
     
-    if (remainder === 0 && now.getSeconds() < 21) {
-      // Still in current minute and before second 21
-      // Keep current minute
+    if (remainder === 0 && now.getSeconds() < 1) {
+      // Vẫn trong phút hiện tại và trước giây 1
+      // Giữ nguyên phút hiện tại
     } else {
-      // Past second 21 of current minute or not a minute divisible by 3
-      // Calculate next minute divisible by 3
+      // Đã qua giây 1 của phút hiện tại hoặc không phải phút chia hết cho 3
+      // Tính toán phút tiếp theo chia hết cho 3
       const minutesToAdd = remainder === 0 ? 3 : 3 - remainder
       nextFetch.setMinutes(currentMinute + minutesToAdd)
     }
   } else if (level === 5) {
-    // Level 5: Next minute divisible by 5, second 42 (after command runs at second 40)
-    nextFetch.setSeconds(42)
+    // Level 5: 5 phút một lần, giây 1s
     
     const currentMinute = now.getMinutes()
     const remainder = currentMinute % 5
     
-    if (remainder === 0 && now.getSeconds() < 42) {
-      // Still in current minute and before second 42
-      // Keep current minute
+    if (remainder === 0 && now.getSeconds() < 1) {
+      // Vẫn trong phút hiện tại và trước giây 1
+      // Giữ nguyên phút hiện tại
     } else {
-      // Past second 42 of current minute or not a minute divisible by 5
-      // Calculate next minute divisible by 5
+      // Đã qua giây 1 của phút hiện tại hoặc không phải phút chia hết cho 5
+      // Tính toán phút tiếp theo chia hết cho 5
       const minutesToAdd = remainder === 0 ? 5 : 5 - remainder
       nextFetch.setMinutes(currentMinute + minutesToAdd)
     }
@@ -442,11 +442,8 @@ const startCountdown = (level, generatedTime = null) => {
       
       const currentSecond = new Date().getSeconds()
       
-      // Check if it's the right time to call API after command runs
-      const isCommandExecutionTime = 
-        (level === 1 && currentSecond === 1) || 
-        (level === 3 && currentSecond === 21) || 
-        (level === 5 && currentSecond === 41)
+      // Check if it's the right time to call API (giây 1s cho tất cả các level)
+      const isCommandExecutionTime = currentSecond === 1
       
       console.log(`Level ${level}: Đếm ngược kết thúc, thời điểm hiện tại: ${currentTime.toLocaleTimeString()}, giây: ${currentSecond}`)
       console.log(`Level ${level}: Đúng thời điểm gọi API? ${isCommandExecutionTime ? 'Có' : 'Không'}`)
